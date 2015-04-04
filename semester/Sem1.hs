@@ -1,24 +1,53 @@
+import Data.List
+
 data Term = Var String -- variable
           | App Term Term -- application
           | Lam String Term -- lambda abstraction
+          deriving Eq
 
 instance Show Term where
     show (Lam argname body) =
-        "(lambda " ++ argname ++ ". " ++ show body ++ ")"
+        "(\\" ++ argname ++ ". " ++ show body ++ ")"
     show (App function argument) =
         "(" ++ show function ++ " " ++ show argument ++ ")"
     show (Var name) = name
 
-type Env = [(String, Term)]
+eval :: Term -> Term
+eval exp = calc exp []
+  where calc (App f a) as = calc f (a:as)
+        calc (Lam s e) [] = Lam s (eval e)
+        calc (Lam s e) (a:as) = calc (subst s a e) as
+        calc f as = app f as
+        app f as = foldl App f (map eval as)
 
-eval :: Env -> Term -> Term
-eval env e@(Var a) = maybe e id (lookup a env)
-eval env (Lam x e) = Lam x (eval env e)
-eval env (App e1 e2) = apply env (eval env e1) (eval env e2)
 
-apply :: Env -> Term -> Term -> Term
-apply env (Lam x e) e2 = eval ((x, e2):env) e
-apply env e1 e2 = App e1 e2
+subst :: String -> Term -> Term -> Term
+subst var to in1 = mySubst in1
+  where mySubst exp@(Var i) = if i == var then to else exp
+        mySubst (App f a) = App (mySubst f) (mySubst a)
+        mySubst (Lam i exp) =
+            if var == i then
+                Lam i exp
+            else if i `elem` freeVars then
+                let i' = cloneSym exp i
+                    exp' = substVar i i' exp
+                in  Lam i' (mySubst exp')
+            else
+                Lam i (mySubst exp)
+        freeVars = freeV to
+        cloneSym exp i = loop i
+           where loop i' = if i' `elem` vars then loop (i ++ "'") else i'
+                 vars = freeVars ++ freeV exp
+
+substVar :: String -> String -> Term -> Term
+substVar s s' exp = subst s (Var s') exp
+
+freeV :: Term -> [String]
+freeV (Var s) = [s]
+freeV (App f a) = freeV f `union` freeV a
+freeV (Lam i e) = delete i $ freeV e
+
+
 
 
 true  = Lam "t" (Lam "f" (Var "t"))
@@ -56,4 +85,42 @@ mul = Lam "m" (Lam "n" (Lam "f"
 ex34  = App (App add num3) num4 -- = 7
 
 
-test = App (Lam "x" (Lam "y" (Var "x"))) (Lam "z" (Var "z"))
+-------------------------
+-----   TESTS ------------
+---------------------------
+
+-- 1
+-- Input: ((λ x. x) (λ y. (λ z. z)))
+-- Output: (λ y. (λ z. z))
+test1 = App(Lam "x" (Var "x")) (Lam "y" (Lam "z" (Var "z")))
+test1A = Lam "y" (Lam "z" (Var "z"))
+assert1 = eval test1 == test1A
+
+
+-- 2
+-- Input: (λ x. ((λ y. y) x))
+-- Output: (λ x. x)
+test2 = Lam "x" (App (Lam "y" (Var "y")) (Var "x") )
+test2A = Lam "x" (Var "x")
+assert2 = eval test2 == test2A
+
+-- 3
+-- Input: ((λ x. (λ y. x)) (λ a. a))
+-- Output: (λ y. (λ a. a))
+test3 = App (Lam "x" (Lam "y" (Var "x"))) (Lam "a" (Var "a"))
+test3A = Lam "y" (Lam "a" (Var "a"))
+assert3 = eval test3 == test3A
+
+-- 4
+-- Input: (((λ x. (λ y. x)) (λ a. a)) ((λx. (x x)) (λx. (x x))))
+-- Output: (λ a. a) 
+test4 = App (App (Lam "x" (Lam "y" (Var "x"))) (Lam "a" (Var "a"))) (App (Lam "x" (App (Var "x") (Var "x"))) (Lam "x" (App (Var "x") (Var "x"))))
+test4A = Lam "a" (Var "a")
+assert4 = eval test4 == test4A
+
+-- 5
+-- Input: (λxy.x) y
+-- Output: (λy'. y)
+test5 = App (Lam "x" (Lam "y" (Var "x"))) (Var "y")
+test5A = Lam "y'" (Var "y")
+assert5 = eval test5 == test5A
