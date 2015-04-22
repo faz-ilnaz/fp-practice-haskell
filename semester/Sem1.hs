@@ -22,8 +22,8 @@ eval exp = calc exp []
 
 
 subst :: String -> Term -> Term -> Term
-subst var to in1 = mySubst in1
-  where mySubst exp@(Var i) = if i == var then to else exp
+subst var at to = mySubst to
+  where mySubst exp@(Var i) = if i == var then at else exp
         mySubst (App f a) = App (mySubst f) (mySubst a)
         mySubst (Lam i exp) =
             if var == i then
@@ -34,7 +34,7 @@ subst var to in1 = mySubst in1
                 in  Lam i' (mySubst exp')
             else
                 Lam i (mySubst exp)
-        freeVars = freeV to
+        freeVars = freeV at
         cloneSym exp i = loop i
            where loop i' = if i' `elem` vars then loop (i ++ "'") else i'
                  vars = freeVars ++ freeV exp
