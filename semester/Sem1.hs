@@ -119,8 +119,18 @@ test4A = Lam "a" (Var "a")
 assert4 = eval test4 == test4A
 
 -- 5
--- Input: (λxy.x) y
+-- Input: (λx y.x) y
 -- Output: (λy'. y)
 test5 = App (Lam "x" (Lam "y" (Var "x"))) (Var "y")
 test5A = Lam "y'" (Var "y")
 assert5 = eval test5 == test5A
+
+-- 6
+-- Input: (λb. λa. a) (λ z. z)
+-- Output: (λa. a)
+test6 = App (Lam "b" (Lam "a" (Var "a"))) (Lam "z" (Var "z"))
+test6A = Lam "a" (Var "a")
+assert6 = eval test6 == test6A
+
+-- 7( with numbers)
+assert7 = eval ex34 == eval num7
