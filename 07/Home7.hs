@@ -42,7 +42,22 @@ primes = filter isPrime nat
 newtype Board = Board { unBoard :: [Int] } deriving (Eq,Show)
 
 queens :: Int -> [Board]
-queens n = undefined
+queens n = [Board { unBoard = [1..n]}]
+
+perms :: Eq a => [a] -> [[a]]
+perms [] = [[]]
+perms xs = [ x:ps | x <- xs , ps <- perms ( delete x xs ) ]
+
+
+delete :: Eq a =>  a -> [a] -> [a]
+delete _ []     = []
+delete x (y:ys) = if x == y then ys else y : delete x ys
+
+test n =  filter (\x -> isSolution x ) $ perms [1..n]
+
+isSolution :: [a] -> Bool
+isSolution [] = False
+isSolution (x:xs) = undefined
 
 -- Белые начинают и дают мат в два хода
 -- 
