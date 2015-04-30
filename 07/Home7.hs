@@ -42,22 +42,23 @@ primes = filter isPrime nat
 newtype Board = Board { unBoard :: [Int] } deriving (Eq,Show)
 
 queens :: Int -> [Board]
-queens n = [Board { unBoard = [1..n]}]
+queens n = map (\x -> Board { unBoard = x}) $ test n
+  where test :: Int -> [[Int]]
+        test n =  filter (\x -> isSolution x ) $ perms [1..n]
 
-perms :: Eq a => [a] -> [[a]]
-perms [] = [[]]
-perms xs = [ x:ps | x <- xs , ps <- perms ( delete x xs ) ]
+        -- Generate all permutations of the list
+        perms :: [Int] -> [[Int]]
+        perms [] = [[]]
+        perms xs = [ x:ps | x <- xs , ps <- perms ( delete x xs ) ]
+          where delete :: Int -> [Int] -> [Int]
+                delete _ []     = []
+                delete x (y:ys) = if x == y then ys else y : delete x ys
 
-
-delete :: Eq a =>  a -> [a] -> [a]
-delete _ []     = []
-delete x (y:ys) = if x == y then ys else y : delete x ys
-
-test n =  filter (\x -> isSolution x ) $ perms [1..n]
-
-isSolution :: [a] -> Bool
-isSolution [] = False
-isSolution (x:xs) = undefined
+        isSolution :: [Int] -> Bool
+        isSolution [] = True
+        isSolution (y:ys) = (check y ys 1) && isSolution ys
+          where check a [] n = True
+                check a (x:xs) n = (abs(a-x) /= n) && check a xs (n+1)
 
 -- Белые начинают и дают мат в два хода
 -- 
