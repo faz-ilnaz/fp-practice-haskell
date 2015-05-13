@@ -22,5 +22,13 @@ decodeBinary = foldl (\n x -> helper n x) 0
 -- (аналогично декодированию азбуки Морзе, но
 -- учтите бесконечность дерева -- нужна ленивость)
 decodeFibo :: String -> Integer
-decodeFibo = undefined
-              
+decodeFibo xs = myFoldr (\prev curr x n -> helper n prev curr x) 0 1 $ reverse xs
+  where myFoldr :: (Integer -> Integer -> Char -> Integer -> Integer) -> Integer -> Integer -> [Char] -> Integer
+        myFoldr f prev curr [] = 0
+        myFoldr f prev curr ('f':xs) = myFoldr f prev curr xs
+        myFoldr _ _ _ ('1':'1':_) = error "Incorrect args!"
+        myFoldr f prev curr (x:xs) = f prev curr x $ myFoldr f curr (prev + curr) xs
+        
+        helper n prev curr '1' = n+prev+curr
+        helper n prev curr '0' = n
+
