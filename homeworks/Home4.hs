@@ -4,7 +4,7 @@ data Expr = Val Int
           | Mult Expr Expr
           | Div Expr Expr
           | Mod Expr Expr
-          	deriving(Show)
+          	deriving(Show, Eq)
 
 eval :: Expr -> Int
 eval (Val x) = x
