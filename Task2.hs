@@ -16,6 +16,6 @@ treeHeight :: Tree a -> Int
 treeHeight Empty = 0
 treeHeight (Branch x _ y) = 1 + max (treeHeight x) (treeHeight y)
 
-tmap :: Tree a -> (a -> b) -> b
-tmap Empty f = 0
-tmap (Branch x a y) f = tmap(Branch( x (f a) y)) f 
+tmap :: Tree a -> (a -> b) -> Tree b
+tmap Empty f = Empty
+tmap (Branch x a y) f = Branch (tmap x f) (f a) (tmap y f) 
